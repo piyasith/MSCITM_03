@@ -8,7 +8,7 @@ const userRoutes = require('./routes/user');
 const { setupDefaultAdmin } = require('./controllers/adminController');
 const Setting = require('./models/Setting');
 
-dotenv.config();
+dotenv.config({ path: require('path').join(__dirname, '.env') });
 const app = express();
 
 app.use(cors());
