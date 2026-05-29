@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE = 'http://localhost:5000/api';
+export const API_BASE = 'http://localhost:5002/api';
 
 export const userAuthHeader = () => {
   const t = localStorage.getItem('userToken');
