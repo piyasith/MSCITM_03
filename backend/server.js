@@ -12,7 +12,7 @@ dotenv.config({ path: require('path').join(__dirname, '.env') });
 const app = express();
 
 app.use(cors(({
-  origin: 'http://localhost:3000'})));
+  origin: 'http://13.51.79.132:3000'})));
 app.use(express.json({ limit: '5mb' }));
 
 (async () => {
