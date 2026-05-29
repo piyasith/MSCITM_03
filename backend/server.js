@@ -12,7 +12,7 @@ dotenv.config({ path: require('path').join(__dirname, '.env') });
 const app = express();
 
 app.use(cors(({
-  origin: 'http://localhost:3000'})));
+  origin: 'http://flavorcritic-load-balancer-47118991.eu-north-1.elb.amazonaws.com'})));
 app.use(express.json({ limit: '5mb' }));
 
 (async () => {

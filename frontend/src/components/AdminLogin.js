@@ -11,7 +11,7 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5002/api/admin/login', { email, password });
+      const res = await axios.post('http://13.51.79.132:5002/api/admin/login', { email, password });
       localStorage.setItem('adminToken', res.data.token);
       localStorage.setItem('adminEmail', res.data.admin.email);
       localStorage.setItem('adminId', res.data.admin.id);
