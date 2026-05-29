@@ -2,7 +2,7 @@ const MenuItem = require('../models/MenuItem');
 
 exports.getMenuItemsByRestaurant = async (req, res) => {
   try {
-    const items = await MenuItem.find({ restaurantId: req.params.restaurantId });
+    const items = await MenuItem.find({ restaurantId: req.params.restaurantId, isRetired: { $ne: true } });
     res.json(items);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
@@ -15,9 +15,29 @@ exports.createMenuItem = async (req, res) => {
   } catch (err) { res.status(400).json({ message: err.message }); }
 };
 
+// FR-20 update item price and availability, reflected immediately after save
 exports.updateMenuItem = async (req, res) => {
   try {
     const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!item) return res.status(404).json({ message: 'Not found' });
+    res.json(item);
+  } catch (err) { res.status(400).json({ message: err.message }); }
+};
+
+// FR-20 dedicated availability toggle (admin)
+exports.setAvailability = async (req, res) => {
+  try {
+    const { isAvailable } = req.body;
+    const item = await MenuItem.findByIdAndUpdate(req.params.id, { isAvailable: !!isAvailable }, { new: true });
+    if (!item) return res.status(404).json({ message: 'Not found' });
+    res.json(item);
+  } catch (err) { res.status(400).json({ message: err.message }); }
+};
+
+// FR-21 retire (soft delete) item; preserves history
+exports.retireMenuItem = async (req, res) => {
+  try {
+    const item = await MenuItem.findByIdAndUpdate(req.params.id, { isRetired: true, isAvailable: false }, { new: true });
     if (!item) return res.status(404).json({ message: 'Not found' });
     res.json(item);
   } catch (err) { res.status(400).json({ message: err.message }); }

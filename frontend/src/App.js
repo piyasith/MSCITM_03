@@ -9,6 +9,8 @@ import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import UserLogin from './components/UserLogin';
 import UserRegister from './components/UserRegister';
+import UserDashboard from './components/UserDashboard';
+import TopRated from './components/TopRated';
 
 function App() {
   return (
@@ -19,10 +21,12 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/restaurant/:id" element={<RestaurantDetail />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/top-rated" element={<TopRated />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard/*" element={<AdminDashboard />} />
           <Route path="/user/login" element={<UserLogin />} />
           <Route path="/user/register" element={<UserRegister />} />
+          <Route path="/user/dashboard/*" element={<UserDashboard />} />
         </Routes>
       </main>
       <Footer />

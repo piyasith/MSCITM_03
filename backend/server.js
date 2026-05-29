@@ -6,15 +6,20 @@ const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const { setupDefaultAdmin } = require('./controllers/adminController');
+const Setting = require('./models/Setting');
 
-dotenv.config();
+dotenv.config({ path: require('path').join(__dirname, '.env') });
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
-connectDB(process.env.MONGO_URI);
-setupDefaultAdmin();
+(async () => {
+  await connectDB(process.env.MONGO_URI);
+  await setupDefaultAdmin();
+  const existing = await Setting.findOne({ key: 'global' });
+  if (!existing) await Setting.create({ key: 'global' });
+})();
 
 app.use('/api', publicRoutes);
 app.use('/api/admin', adminRoutes);
