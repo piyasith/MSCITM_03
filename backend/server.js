@@ -11,7 +11,8 @@ const Setting = require('./models/Setting');
 dotenv.config({ path: require('path').join(__dirname, '.env') });
 const app = express();
 
-app.use(cors());
+app.use(cors(({
+  origin: 'http://localhost:3000'})));
 app.use(express.json({ limit: '5mb' }));
 
 (async () => {
@@ -30,5 +31,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Server error' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
