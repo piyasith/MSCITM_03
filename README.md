@@ -4,6 +4,8 @@ FlavorCritic is a full-stack web application for discovering restaurants, readin
 
 The project is split into a **React** frontend and an **Express + MongoDB** backend, communicating over a REST API.
 
+For step-by-step instructions aimed at end users, company representatives, and administrators, see **[USER_GUIDE.md](./USER_GUIDE.md)**.
+
 ---
 
 ## Features
