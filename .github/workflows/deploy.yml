@@ -73,7 +73,9 @@ jobs:
         run: |
           aws ecs describe-task-definition \
             --task-definition "$BACKEND_TASK_DEF" \
-            --query taskDefinition > backend-task-def.json
+            --query taskDefinition \
+            | jq 'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy,.enableFaultInjection)' \
+            > backend-task-def.json
 
       - name: Render backend task definition with new image
         id: backend-task-def
@@ -109,7 +111,9 @@ jobs:
         run: |
           aws ecs describe-task-definition \
             --task-definition "$FRONTEND_TASK_DEF" \
-            --query taskDefinition > frontend-task-def.json
+            --query taskDefinition \
+            | jq 'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy,.enableFaultInjection)' \
+            > frontend-task-def.json
 
       - name: Render frontend task definition with new image
         id: frontend-task-def
