@@ -5,6 +5,16 @@ on:
 
 env:
   AWS_REGION: eu-north-1
+  # Set these in: GitHub repo → Settings → Secrets and variables → Actions → Variables tab
+  BACKEND_ECR_REPO: ${{ vars.BACKEND_ECR_REPO }}
+  FRONTEND_ECR_REPO: ${{ vars.FRONTEND_ECR_REPO }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+  BACKEND_ECS_SERVICE: ${{ vars.BACKEND_ECS_SERVICE }}
+  FRONTEND_ECS_SERVICE: ${{ vars.FRONTEND_ECS_SERVICE }}
+  BACKEND_TASK_DEF: ${{ vars.BACKEND_TASK_DEF }}
+  FRONTEND_TASK_DEF: ${{ vars.FRONTEND_TASK_DEF }}
+  BACKEND_CONTAINER_NAME: ${{ vars.BACKEND_CONTAINER_NAME }}
+  FRONTEND_CONTAINER_NAME: ${{ vars.FRONTEND_CONTAINER_NAME }}
 
 jobs:
   build-and-deploy:
@@ -14,6 +24,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate required variables
+        run: |
+          missing=""
+          [ -z "$BACKEND_ECR_REPO" ]       && missing="$missing BACKEND_ECR_REPO"
+          [ -z "$FRONTEND_ECR_REPO" ]      && missing="$missing FRONTEND_ECR_REPO"
+          [ -z "$ECS_CLUSTER" ]            && missing="$missing ECS_CLUSTER"
+          [ -z "$BACKEND_ECS_SERVICE" ]    && missing="$missing BACKEND_ECS_SERVICE"
+          [ -z "$FRONTEND_ECS_SERVICE" ]   && missing="$missing FRONTEND_ECS_SERVICE"
+          [ -z "$BACKEND_TASK_DEF" ]       && missing="$missing BACKEND_TASK_DEF"
+          [ -z "$FRONTEND_TASK_DEF" ]      && missing="$missing FRONTEND_TASK_DEF"
+          [ -z "$BACKEND_CONTAINER_NAME" ] && missing="$missing BACKEND_CONTAINER_NAME"
+          [ -z "$FRONTEND_CONTAINER_NAME" ] && missing="$missing FRONTEND_CONTAINER_NAME"
+          if [ -n "$missing" ]; then
+            echo "❌ Missing GitHub Actions Variables:$missing"
+            echo "Go to: Settings → Secrets and variables → Actions → Variables tab"
+            exit 1
+          fi
+          echo "✅ All required variables are set"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -34,14 +63,16 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/${{ secrets.BACKEND_ECR_REPO }}:$IMAGE_TAG ./backend
-          docker push $ECR_REGISTRY/${{ secrets.BACKEND_ECR_REPO }}:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/${{ secrets.BACKEND_ECR_REPO }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          IMAGE="$ECR_REGISTRY/$BACKEND_ECR_REPO:$IMAGE_TAG"
+          echo "Building: $IMAGE"
+          docker build -t "$IMAGE" ./backend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: Download backend task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ secrets.BACKEND_TASK_DEF }} \
+            --task-definition "$BACKEND_TASK_DEF" \
             --query taskDefinition > backend-task-def.json
 
       - name: Render backend task definition with new image
@@ -49,15 +80,15 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: backend-task-def.json
-          container-name: ${{ secrets.BACKEND_CONTAINER_NAME }}
+          container-name: ${{ env.BACKEND_CONTAINER_NAME }}
           image: ${{ steps.backend-image.outputs.image }}
 
       - name: Deploy backend to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
-          service: ${{ secrets.BACKEND_ECS_SERVICE }}
-          cluster: ${{ secrets.ECS_CLUSTER }}
+          service: ${{ env.BACKEND_ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
       # ── Frontend ─────────────────────────────────────────────────────────────
@@ -68,14 +99,16 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/${{ secrets.FRONTEND_ECR_REPO }}:$IMAGE_TAG ./frontend
-          docker push $ECR_REGISTRY/${{ secrets.FRONTEND_ECR_REPO }}:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/${{ secrets.FRONTEND_ECR_REPO }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          IMAGE="$ECR_REGISTRY/$FRONTEND_ECR_REPO:$IMAGE_TAG"
+          echo "Building: $IMAGE"
+          docker build -t "$IMAGE" ./frontend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: Download frontend task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ secrets.FRONTEND_TASK_DEF }} \
+            --task-definition "$FRONTEND_TASK_DEF" \
             --query taskDefinition > frontend-task-def.json
 
       - name: Render frontend task definition with new image
@@ -83,13 +116,13 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: frontend-task-def.json
-          container-name: ${{ secrets.FRONTEND_CONTAINER_NAME }}
+          container-name: ${{ env.FRONTEND_CONTAINER_NAME }}
           image: ${{ steps.frontend-image.outputs.image }}
 
       - name: Deploy frontend to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.frontend-task-def.outputs.task-definition }}
-          service: ${{ secrets.FRONTEND_ECS_SERVICE }}
-          cluster: ${{ secrets.ECS_CLUSTER }}
+          service: ${{ env.FRONTEND_ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
