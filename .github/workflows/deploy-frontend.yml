@@ -1,0 +1,83 @@
+name: Deploy Frontend to AWS ECS
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: eu-north-1
+  ECR_REPO: ${{ vars.FRONTEND_ECR_REPO }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+  ECS_SERVICE: ${{ vars.FRONTEND_ECS_SERVICE }}
+  TASK_DEF: ${{ vars.FRONTEND_TASK_DEF }}
+  CONTAINER_NAME: ${{ vars.FRONTEND_CONTAINER_NAME }}
+
+jobs:
+  deploy:
+    name: Build, Push & Deploy Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate required variables
+        run: |
+          missing=""
+          [ -z "$ECR_REPO" ]       && missing="$missing FRONTEND_ECR_REPO"
+          [ -z "$ECS_CLUSTER" ]    && missing="$missing ECS_CLUSTER"
+          [ -z "$ECS_SERVICE" ]    && missing="$missing FRONTEND_ECS_SERVICE"
+          [ -z "$TASK_DEF" ]       && missing="$missing FRONTEND_TASK_DEF"
+          [ -z "$CONTAINER_NAME" ] && missing="$missing FRONTEND_CONTAINER_NAME"
+          if [ -n "$missing" ]; then
+            echo "❌ Missing GitHub Actions Variables:$missing"
+            echo "Go to: Settings → Secrets and variables → Actions → Variables tab"
+            exit 1
+          fi
+          echo "✅ All required variables are set"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push frontend image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE="$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
+          echo "Building: $IMAGE"
+          docker build -t "$IMAGE" ./frontend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$TASK_DEF" \
+            --query taskDefinition \
+            | jq 'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy,.enableFaultInjection)' \
+            > task-def.json
+
+      - name: Render task definition with new image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
