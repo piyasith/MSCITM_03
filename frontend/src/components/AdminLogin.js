@@ -37,9 +37,7 @@ const AdminLogin = () => {
           </div>
           <button type="submit" className="btn-primary" style={{ width: '100%' }}>Login</button>
         </form>
-        <p className="text-center" style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
-          Default: admin@example.com / admin123
-        </p>
+
       </div>
     </div>
   );
