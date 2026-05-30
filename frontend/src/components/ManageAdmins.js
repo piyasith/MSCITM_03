@@ -18,7 +18,7 @@ const ManageAdmins = () => {
   }, []);
 
   const fetchCurrentAdmin = async () => {
-    const res = await axios.get('http://13.51.79.132:5002/api/admin/me', {
+    const res = await axios.get('/api/admin/me', {
       headers: { Authorization: `Bearer ${token}` }
     });
     setCurrentAdminRole(res.data.role);
@@ -26,7 +26,7 @@ const ManageAdmins = () => {
 
   const fetchAdmins = async () => {
     try {
-      const res = await axios.get('http://13.51.79.132:5002/api/admin/admins', {
+      const res = await axios.get('/api/admin/admins', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAdmins(res.data);
@@ -38,7 +38,7 @@ const ManageAdmins = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://13.51.79.132:5002/api/admin/admins', form, {
+      await axios.post('/api/admin/admins', form, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Admin created');
@@ -52,7 +52,7 @@ const ManageAdmins = () => {
 
   const handleUpdate = async (id) => {
     try {
-      await axios.put(`http://13.51.79.132:5002/api/admin/admins/${id}`, editData[id], {
+      await axios.put(`/api/admin/admins/${id}`, editData[id], {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Admin updated');
@@ -65,7 +65,7 @@ const ManageAdmins = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm('Delete this admin?')) {
-      await axios.delete(`http://13.51.79.132:5002/api/admin/admins/${id}`, {
+      await axios.delete(`/api/admin/admins/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Admin deleted');
@@ -76,7 +76,7 @@ const ManageAdmins = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://13.51.79.132:5002/api/admin/change-password', passwordData, {
+      await axios.post('/api/admin/change-password', passwordData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Password changed');
