@@ -84,6 +84,10 @@ jobs:
           task-definition: backend-task-def.json
           container-name: ${{ env.BACKEND_CONTAINER_NAME }}
           image: ${{ steps.backend-image.outputs.image }}
+          environment-variables: |
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=5002
 
       - name: Deploy backend to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
