@@ -11,7 +11,7 @@ const UserLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://13.51.79.132:5002/api/user/login', { email, password });
+      const res = await axios.post('/api/user/login', { email, password });
       localStorage.setItem('userToken', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/');
